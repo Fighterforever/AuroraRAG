@@ -1,7 +1,7 @@
 models:
   deepseek_chat:
     api_base: https://api.deepseek.com
-    api_key: sk-d015316350cb48e79baf9b8d533c40ff
+    api_key: sk-YourApiKey
     model_name: deepseek-chat
     temperature: 0.1
     max_tokens: 8192
