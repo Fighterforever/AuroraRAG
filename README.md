@@ -94,7 +94,7 @@ python main.py ingest
 
 ```bash
 # 单次问答
-python main.py qa "科技创新有限公司的主要业务是什么？"
+python main.py qa "拉赫玛尼诺夫的主要作品有哪些？"
 
 # 多轮对话模式
 python main.py qa
@@ -137,12 +137,12 @@ curl -X POST http://localhost:8000/ingest
 ```json
 {
   "report": {
-    "entity_count": 42,
-    "relationship_count": 43,
-    "event_count": 5,
-    "attribute_count": 8,
-    "communities": 7,
-    "health_score": 0.76,
+    "entity_count": 28,
+    "relationship_count": 35,
+    "event_count": 12,
+    "attribute_count": 15,
+    "communities": 3,
+    "health_score": 0.82,
     "feedback": []
   }
 }
@@ -177,7 +177,7 @@ curl -X POST http://localhost:8000/ingest
 ```bash
 curl -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
-  -d '{"question":"科技创新有限公司的主要业务是什么？"}'
+  -d '{"question":"拉赫玛尼诺夫的主要作品有哪些？"}'
 ```
 
 **响应示例**：
@@ -185,12 +185,12 @@ curl -X POST http://localhost:8000/query \
 ```json
 {
   "answer": {
-    "answer": "科技创新有限公司主要从事机器学习算法开发、自然语言处理系统构建和计算机视觉解决方案设计。主要产品包括智能客服系统、图像识别平台和数据分析工具，广泛应用于金融、医疗、教育和零售等多个行业。",
-    "relevant_entities": ["科技创新有限公司", "机器学习算法", "自然语言处理系统"],
+    "answer": "拉赫玛尼诺夫的主要作品包括：1) 四部钢琴协奏曲，其中第二钢琴协奏曲最为著名；2) 《帕格尼尼主题狂想曲》，其中的第18变奏广为传唱；3) 三部交响曲；4) 多部交响诗如《死之岛》、《交响舞曲》；5) 钢琴独奏作品如G小调前奏曲和第2号钢琴奏鸣曲；6) 改编作品包括巴赫前奏曲、里姆斯基-科萨科夫的《大黄蜂的飞行》等。",
+    "relevant_entities": ["拉赫玛尼诺夫", "第二钢琴协奏曲", "帕格尼尼主题狂想曲", "死之岛", "交响舞曲"],
     "question_analysis": {
       "question_type": "attribute",
-      "key_entities": ["科技创新有限公司"],
-      "intent": "查询公司业务"
+      "key_entities": ["拉赫玛尼诺夫"],
+      "intent": "查询作曲家作品"
     },
     "evidence_plan": {
       "steps": [
@@ -198,10 +198,16 @@ curl -X POST http://localhost:8000/query \
           "step": "cypher_retrieve",
           "graph_paths": [
             {
-              "source_name": "科技创新有限公司",
-              "target_name": "机器学习算法",
-              "relationship": "从事",
-              "description": "主要从事机器学习算法开发"
+              "source_name": "拉赫玛尼诺夫",
+              "target_name": "第二钢琴协奏曲",
+              "relationship": "创作",
+              "description": "1900年完成第二钢琴协奏曲"
+            },
+            {
+              "source_name": "拉赫玛尼诺夫",
+              "target_name": "帕格尼尼主题狂想曲",
+              "relationship": "创作",
+              "description": "创作帕格尼尼主题狂想曲"
             }
           ]
         },
@@ -210,9 +216,9 @@ curl -X POST http://localhost:8000/query \
           "communities": [
             {
               "community_id": "community_0",
-              "title": "科技创新公司AI技术社区",
-              "summary": "该社区以科技创新有限公司为核心，专注于人工智能技术研发...",
-              "keywords": ["人工智能", "技术研发", "产学研合作"]
+              "title": "俄国作曲家音乐社区",
+              "summary": "该社区以拉赫玛尼诺夫为核心，包含俄国音乐传统和浪漫主义晚期音乐风格...",
+              "keywords": ["俄国音乐", "浪漫主义", "钢琴协奏曲", "交响曲"]
             }
           ]
         }
@@ -263,19 +269,19 @@ curl http://localhost:8000/health
 ```json
 {
   "snapshot": {
-    "entity_count": 42,
-    "relationship_count": 43,
-    "event_count": 5,
-    "attribute_count": 8,
-    "community_count": 7,
-    "avg_relationship_degree": 2.05
+    "entity_count": 28,
+    "relationship_count": 35,
+    "event_count": 12,
+    "attribute_count": 15,
+    "community_count": 3,
+    "avg_relationship_degree": 2.5
   },
-  "health_score": 0.76,
+  "health_score": 0.82,
   "signals": {
-    "density": 2.05,
+    "density": 2.5,
     "coverage": 1.0,
-    "communities": 7,
-    "community_density": 0.384
+    "communities": 3,
+    "community_density": 0.42
   }
 }
 ```
