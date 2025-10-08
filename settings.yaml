@@ -1,0 +1,52 @@
+models:
+  deepseek_chat:
+    api_base: https://api.deepseek.com
+    api_key: sk-d015316350cb48e79baf9b8d533c40ff
+    model_name: deepseek-chat
+    temperature: 0.1
+    max_tokens: 8192
+active_model: deepseek_chat
+retry_settings:
+  enable_retry: false
+  max_retries: 3
+  retry_delay: 1
+paths:
+  target_directory: ./sample_data
+  progress_file: extraction_progress.json
+  raw_results_dir: raw_extraction_results
+  output_prefix: GraphRAG分析结果
+  system_prompt: prompts/extractor_system.txt
+
+chunking:
+  max_chars: 2000
+  min_chars: 800
+  overlap_chars: 200
+
+extraction:
+  max_workers: 4
+  rate_limit: 0.3
+
+prompts:
+  entity_extraction_system: prompts/entity_extraction_system.txt
+  question_analysis_system: prompts/question_analysis_system.txt
+  answer_generation_system: prompts/answer_generation_system.txt
+  cypher_generation_system: prompts/cypher_generation_system.txt
+  entity_consolidation_system: prompts/entity_consolidation_system.txt
+  intent_classifier_system: prompts/intent_classifier_system.txt
+  attribute_extraction_system: prompts/attribute_extraction_system.txt
+  event_extraction_system: prompts/event_extraction_system.txt
+  relationship_normalization_system: prompts/relationship_normalization_system.txt
+  relationship_equivalence_system: prompts/relationship_equivalence_system.txt
+  community_summary_system: prompts/community_summary_system.txt
+  relation_weighting_system: prompts/relation_weighting_system.txt
+templates:
+  query: templates/query_templates.yaml
+aliases:
+  dictionary: prompts/alias_dictionary.yaml
+scoring:
+  relation_weights: {}
+neo4j:
+  uri: bolt://localhost:7687
+  user: neo4j
+  password: password
+  database: neo4j

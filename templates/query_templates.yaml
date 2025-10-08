@@ -1,0 +1,139 @@
+relation:
+  - name: partner_direct
+    description: "Direct partner relationship from focus entity"
+    priority: 1
+    weight: 1.0
+    cypher: |
+      MATCH (focus:Entity)-[r:RELATIONSHIP]-(partner:Entity)
+      WHERE focus.id IN $focus_ids
+        AND (
+          size($relationship_keywords) = 0 OR
+          any(term IN $relationship_keywords WHERE toLower(r.relationship) CONTAINS term)
+        )
+      RETURN focus.id AS focus_id,
+             focus.name AS focus_name,
+             partner.id AS partner_id,
+             partner.name AS partner_name,
+             r.relationship AS relationship,
+             r.description AS description,
+             type(r) AS relationship_type
+      LIMIT $limit
+  - name: partner_fuzzy
+    description: "Fuzzy partner lookup by aliases and keywords"
+    priority: 2
+    weight: 0.8
+    cypher: |
+      MATCH (source:Entity)-[r:RELATIONSHIP]-(target:Entity)
+      WHERE any(alias IN $all_aliases WHERE toLower(source.name) CONTAINS alias)
+         OR any(alias IN $all_aliases WHERE toLower(target.name) CONTAINS alias)
+         OR any(term IN $context_terms WHERE toLower(r.relationship) CONTAINS term)
+      RETURN source.id AS focus_id,
+             source.name AS focus_name,
+             target.id AS partner_id,
+             target.name AS partner_name,
+             r.relationship AS relationship,
+             r.description AS description,
+             type(r) AS relationship_type
+      LIMIT $limit
+
+attribute:
+  - name: attribute_projection
+    description: "Project numeric or textual attributes of the focus entity"
+    priority: 1
+    weight: 1.0
+    cypher: |
+      MATCH (focus:Entity)
+      WHERE focus.id IN $focus_ids
+      UNWIND keys(focus) AS key
+      WITH focus, key
+      WHERE key <> 'id' AND key <> 'name' AND key <> 'description' AND focus[key] IS NOT NULL
+      RETURN focus.id AS focus_id,
+             focus.name AS focus_name,
+             key AS attribute_key,
+             toString(focus[key]) AS attribute_value
+      LIMIT $limit
+
+causal:
+  - name: causal_two_hop
+    description: "Two-hop causal path using directional relationships"
+    priority: 1
+    weight: 1.0
+    cypher: |
+      MATCH (source:Entity)-[r1:RELATIONSHIP]->(mid:Entity)-[r2:RELATIONSHIP]->(target:Entity)
+      WHERE source.id IN $focus_ids
+        AND (
+          any(term IN $context_terms WHERE toLower(r1.relationship) CONTAINS term) OR
+          any(term IN $context_terms WHERE toLower(r2.relationship) CONTAINS term)
+        )
+      RETURN source.id AS source_id,
+             source.name AS source_name,
+             target.id AS target_id,
+             target.name AS target_name,
+             collect({mid: mid.name, rel1: r1.relationship, rel2: r2.relationship}) AS path_details
+      LIMIT $limit
+
+timeline:
+  - name: timeline_events
+    description: "Fetch events related to focus entity ordered by time"
+    priority: 1
+    weight: 1.0
+    cypher: |
+      MATCH (focus:Entity)-[:RELATED_TO]->(event:Entity {type: 'EVENT'})
+      WHERE focus.id IN $focus_ids
+      RETURN focus.id AS focus_id,
+             focus.name AS focus_name,
+             event.name AS event_name,
+             event.description AS event_description,
+             event.timestamp AS event_time
+      ORDER BY event_time ASC
+      LIMIT $limit
+
+comparative:
+  - name: comparative_relationships
+    description: "Compare two focus entities by shared relationships"
+    priority: 1
+    weight: 1.0
+    cypher: |
+      MATCH (a:Entity)-[r:RELATIONSHIP]->(b:Entity)
+      WHERE a.id IN $focus_ids AND b.id IN $secondary_ids
+      RETURN a.id AS source_id,
+             a.name AS source_name,
+             b.id AS target_id,
+             b.name AS target_name,
+             r.relationship AS relationship,
+             r.description AS description
+      LIMIT $limit
+
+fallback:
+  - name: generic_neighbors
+    description: "Generic descriptive path when no specific template matched"
+    priority: 99
+    weight: 0.5
+    cypher: |
+      MATCH (focus:Entity)-[r:RELATIONSHIP]-(neighbor:Entity)
+      WHERE focus.id IN $focus_ids
+      RETURN focus.id AS focus_id,
+             focus.name AS focus_name,
+             neighbor.id AS neighbor_id,
+             neighbor.name AS neighbor_name,
+             r.relationship AS relationship,
+             r.description AS description
+      LIMIT $limit
+  - name: partner_two_hop
+    description: "Two-hop partner inference via intermediate nodes"
+    priority: 3
+    weight: 0.7
+    cypher: |
+      MATCH (focus:Entity)-[r1:RELATIONSHIP]->(mid:Entity)-[r2:RELATIONSHIP]->(partner:Entity)
+      WHERE focus.id IN $focus_ids
+        AND (
+          size($relationship_keywords) = 0 OR
+          any(term IN $relationship_keywords WHERE toLower(r1.relationship) CONTAINS term OR toLower(r2.relationship) CONTAINS term)
+        )
+      RETURN focus.id AS source_id,
+             focus.name AS source_name,
+             partner.id AS target_id,
+             partner.name AS target_name,
+             collect({mid: mid.name, rel1: r1.relationship, rel2: r2.relationship}) AS path_details,
+             "two_hop" AS relation_mode
+      LIMIT $limit
